@@ -17,13 +17,16 @@ package cmd
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/spf13/cobra"
 )
 
 var port int
+var timeout int
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -37,7 +40,11 @@ sslcheck www.google.com
 
 sslcheck -p 443 www.google.com
 
-sslcheck --port 443 http://www.google.com/mail`,
+sslcheck --port 443 www.google.com
+
+sslcheck -t 10 www.google.com
+
+sslcheck --timeout 10 www.google.com`,
 	Run: func(cmd *cobra.Command, args []string) {
 		tlsArray := []uint16{
 			tls.VersionTLS12,
@@ -53,6 +60,16 @@ sslcheck --port 443 http://www.google.com/mail`,
 			tls.VersionTLS12: "TLS1.2",
 		}
 
+		timeoutStr := strconv.Itoa(timeout)
+		timeoutDur, err := time.ParseDuration(timeoutStr + "s")
+		if err != nil {
+			panic(err)
+		}
+
+		dialer := &net.Dialer{
+			Timeout: timeoutDur,
+		}
+
 		for _, ip := range args {
 			fmt.Printf("Checking Host: %s.\n", ip)
 			for _, tlsVersion := range tlsArray {
@@ -64,7 +81,7 @@ sslcheck --port 443 http://www.google.com/mail`,
 
 				portString := strconv.Itoa(port)
 
-				conn, err := tls.Dial("tcp", ip+":"+portString, tlsConfig)
+				conn, err := tls.DialWithDialer(dialer, "tcp", ip+":"+portString, tlsConfig)
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -92,6 +109,7 @@ func init() {
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
 
+	RootCmd.PersistentFlags().IntVarP(&timeout, "timeout", "t", 50, "Timeout is the maximum amount of time in seconds a dial will wait")
 	RootCmd.PersistentFlags().IntVarP(&port, "port", "p", 443, "Port to check SSL/TLS versions of")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
