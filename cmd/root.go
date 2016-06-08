@@ -92,7 +92,7 @@ sslcheck --verbose www.google.com`,
 				conn, err := tls.DialWithDialer(dialer, "tcp", ip+":"+portString, tlsConfig)
 				if err != nil {
 					fmt.Println(err)
-					break
+					continue
 				}
 				defer conn.Close()
 
@@ -103,7 +103,7 @@ sslcheck --verbose www.google.com`,
 						hsErr := conn.Handshake()
 						if hsErr != nil {
 							fmt.Printf("Client connected, but the certificate failed.")
-							break
+							continue
 						}
 						state := conn.ConnectionState()
 						for i, certState := range state.PeerCertificates {
@@ -120,7 +120,7 @@ sslcheck --verbose www.google.com`,
 							case 1:
 								fmt.Printf("Issued by:\n\t%v\n\t%v\n\t%v\n", certState.Subject.CommonName, certState.Subject.OrganizationalUnit, certState.Subject.Organization)
 							default:
-								break
+								continue
 							}
 						}
 					}
