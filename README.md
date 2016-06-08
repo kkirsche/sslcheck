@@ -29,6 +29,7 @@ sslcheck --verbose www.google.com
 
 ## Example
 
+Normal mode:
 ```
 ~/g/s/g/k/urltrace git:master ❯❯❯ sslcheck www.google.com
 Checking Host: www.google.com.
@@ -42,6 +43,7 @@ Checking for version: SSLv3.
 tls: server selected unsupported protocol version 300
 ```
 
+Verbose mode:
 ```
 ~/g/g/s/g/k/sslcheck ❯❯❯ sslcheck --verbose www.google.com
 Checking Host: www.google.com.
