@@ -110,7 +110,7 @@ sslcheck --verbose www.google.com`,
 							switch i {
 							case 0:
 								fmt.Println("Server key information:")
-								fmt.Printf("\tCommon Name:\t %s\n\tOrganizational Unit:\t %v\n\tOrganizaiton:\t %v\n", certState.Subject.CommonName, certState.Subject.OrganizationalUnit, certState.Subject.Organization)
+								fmt.Printf("\tCommon Name:\t %s\n\tOrganizational Unit:\t %v\n\tOrganization:\t %v\n", certState.Subject.CommonName, certState.Subject.OrganizationalUnit, certState.Subject.Organization)
 								fmt.Printf("\tCity:\t %v\n\tState:\t %v\n\tCountry: %v\n", certState.Subject.Locality, certState.Subject.Province, certState.Subject.Country)
 								fmt.Printf("SSL Certificate Valid:\n\tFrom:\t %v\n\tTo:\t %v\n", certState.NotBefore, certState.NotAfter)
 								fmt.Printf("Valid Certificate Domain Names:\n")
