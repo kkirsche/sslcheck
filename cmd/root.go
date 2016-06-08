@@ -47,7 +47,11 @@ sslcheck --port 443 www.google.com
 
 sslcheck -t 10 www.google.com
 
-sslcheck --timeout 10 www.google.com`,
+sslcheck --timeout 10 www.google.com
+
+sslcheck -v www.google.com
+
+sslcheck --verbose www.google.com`,
 	Run: func(cmd *cobra.Command, args []string) {
 		tlsArray := []uint16{
 			tls.VersionTLS12,
