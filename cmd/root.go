@@ -25,8 +25,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var port int
-var timeout int
+var (
+	port    int
+	timeout int
+	verbose bool
+)
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -72,6 +75,7 @@ sslcheck --timeout 10 www.google.com`,
 
 		for _, ip := range args {
 			fmt.Printf("Checking Host: %s.\n", ip)
+			shownTLSInfo := false
 			for _, tlsVersion := range tlsArray {
 				fmt.Printf("Checking for version: %s.\n", tlsNames[tlsVersion])
 				tlsConfig := &tls.Config{
@@ -84,11 +88,38 @@ sslcheck --timeout 10 www.google.com`,
 				conn, err := tls.DialWithDialer(dialer, "tcp", ip+":"+portString, tlsConfig)
 				if err != nil {
 					fmt.Println(err)
+					break
 				}
+				defer conn.Close()
 
 				if conn != nil {
 					fmt.Printf("Version supported: %s.\n", tlsNames[tlsVersion])
-					conn.Close()
+					if verbose && !shownTLSInfo {
+						shownTLSInfo = true
+						hsErr := conn.Handshake()
+						if hsErr != nil {
+							fmt.Printf("Client connected, but the certificate failed.")
+							break
+						}
+						state := conn.ConnectionState()
+						for i, certState := range state.PeerCertificates {
+							switch i {
+							case 0:
+								fmt.Println("Server key information:")
+								fmt.Printf("\tCommon Name:\t %s\n\tOrganizational Unit:\t %v\n\tOrganizaiton:\t %v\n", certState.Subject.CommonName, certState.Subject.OrganizationalUnit, certState.Subject.Organization)
+								fmt.Printf("\tCity:\t %v\n\tState:\t %v\n\tCountry: %v\n", certState.Subject.Locality, certState.Subject.Province, certState.Subject.Country)
+								fmt.Printf("SSL Certificate Valid:\n\tFrom:\t %v\n\tTo:\t %v\n", certState.NotBefore, certState.NotAfter)
+								fmt.Printf("Valid Certificate Domain Names:\n")
+								for dns := range certState.DNSNames {
+									fmt.Printf("\t%v\n", certState.DNSNames[dns])
+								}
+							case 1:
+								fmt.Printf("Issued by:\n\t%v\n\t%v\n\t%v\n", certState.Subject.CommonName, certState.Subject.OrganizationalUnit, certState.Subject.Organization)
+							default:
+								break
+							}
+						}
+					}
 				}
 			}
 		}
@@ -109,6 +140,7 @@ func init() {
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
 
+	RootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enables verbose mode")
 	RootCmd.PersistentFlags().IntVarP(&timeout, "timeout", "t", 50, "Timeout is the maximum amount of time in seconds a dial will wait")
 	RootCmd.PersistentFlags().IntVarP(&port, "port", "p", 443, "Port to check SSL/TLS versions of")
 	// Cobra also supports local flags, which will only run
