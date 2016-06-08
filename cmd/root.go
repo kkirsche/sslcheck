@@ -28,13 +28,16 @@ var port int
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "sslcheck",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "sslcheck allows a user to check for supported SSL/TLS versions from SSLv3 up",
+	Long: `sslcheck is designed to allow a user to check the versions of SSL or
+TLS which are supported by a remote host or IP address. This supports SSLv3 up
+to TLS1.2. The command may be used like so:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+sslcheck www.google.com
+
+sslcheck -p 443 www.google.com
+
+sslcheck --port 443 http://www.google.com/mail`,
 	Run: func(cmd *cobra.Command, args []string) {
 		tlsArray := []uint16{
 			tls.VersionTLS12,
