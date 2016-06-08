@@ -37,7 +37,7 @@ sslcheck www.google.com
 
 sslcheck -p 443 www.google.com
 
-sslcheck --port 443 http://www.google.com/mail`,
+sslcheck --port 443 www.google.com/mail`,
 	Run: func(cmd *cobra.Command, args []string) {
 		tlsArray := []uint16{
 			tls.VersionTLS12,
