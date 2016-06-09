@@ -141,6 +141,8 @@ sslcheck --verbose www.google.com`,
 	},
 }
 
+// PrintStringSlice prints out the title, followed by each item within the slice
+// of strings in a comma separated list. It then prints a newline.
 func PrintStringSlice(title string, slice []string) {
 	fmt.Print(title)
 	len := len(slice)
