@@ -110,15 +110,26 @@ sslcheck --verbose www.google.com`,
 							switch i {
 							case 0:
 								fmt.Println("Server key information:")
-								fmt.Printf("\tCommon Name:\t %s\n\tOrganizational Unit:\t %v\n\tOrganization:\t %v\n", certState.Subject.CommonName, certState.Subject.OrganizationalUnit, certState.Subject.Organization)
-								fmt.Printf("\tCity:\t %v\n\tState:\t %v\n\tCountry: %v\n", certState.Subject.Locality, certState.Subject.Province, certState.Subject.Country)
-								fmt.Printf("SSL Certificate Valid:\n\tFrom:\t %v\n\tTo:\t %v\n", certState.NotBefore, certState.NotAfter)
-								fmt.Printf("Valid Certificate Domain Names:\n")
+								fmt.Printf("\tCommon Name:\t %s\n", certState.Subject.CommonName)
+								PrintStringSlice("\tOrganizational Unit:\t", certState.Subject.OrganizationalUnit)
+								PrintStringSlice("\tOrganization:\t", certState.Subject.Organization)
+								PrintStringSlice("\tCity:\t", certState.Subject.Locality)
+								PrintStringSlice("\tState:\t", certState.Subject.Province)
+								PrintStringSlice("\tCountry:", certState.Subject.Country)
+								fmt.Println()
+								fmt.Println("SSL Certificate Valid:")
+								fmt.Printf("\tFrom:\t %s\n", certState.NotBefore.String())
+								fmt.Printf("\tTo:\t %s\n", certState.NotAfter.String())
+								fmt.Println()
+								fmt.Println("Valid Certificate Domain Names:")
 								for dns := range certState.DNSNames {
 									fmt.Printf("\t%v\n", certState.DNSNames[dns])
 								}
 							case 1:
-								fmt.Printf("Issued by:\n\t%v\n\t%v\n\t%v\n", certState.Subject.CommonName, certState.Subject.OrganizationalUnit, certState.Subject.Organization)
+								fmt.Println("Issued by:")
+								fmt.Printf("\t%s\n", certState.Subject.CommonName)
+								PrintStringSlice("", certState.Subject.OrganizationalUnit)
+								PrintStringSlice("", certState.Subject.Organization)
 							default:
 								continue
 							}
@@ -128,6 +139,18 @@ sslcheck --verbose www.google.com`,
 			}
 		}
 	},
+}
+
+func PrintStringSlice(title string, slice []string) {
+	fmt.Print(title)
+	len := len(slice)
+	for i, item := range slice {
+		fmt.Print(item)
+		if i < len-1 {
+			fmt.Print(", ")
+		}
+	}
+	fmt.Print("\n")
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
