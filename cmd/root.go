@@ -26,10 +26,18 @@ import (
 )
 
 var (
-	port    int
-	timeout int
-	verbose bool
+	port         int
+	timeout      int
+	verbose      bool
+	shownTLSInfo bool
 )
+
+var tlsNames = map[uint16]string{
+	tls.VersionSSL30: "SSLv3",
+	tls.VersionTLS10: "TLS1.0",
+	tls.VersionTLS11: "TLS1.1",
+	tls.VersionTLS12: "TLS1.2",
+}
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -53,20 +61,6 @@ sslcheck -v www.google.com
 
 sslcheck --verbose www.google.com`,
 	Run: func(cmd *cobra.Command, args []string) {
-		tlsArray := []uint16{
-			tls.VersionTLS12,
-			tls.VersionTLS11,
-			tls.VersionTLS10,
-			tls.VersionSSL30,
-		}
-
-		tlsNames := map[uint16]string{
-			tls.VersionSSL30: "SSLv3",
-			tls.VersionTLS10: "TLS1.0",
-			tls.VersionTLS11: "TLS1.1",
-			tls.VersionTLS12: "TLS1.2",
-		}
-
 		timeoutStr := strconv.Itoa(timeout)
 		timeoutDur, err := time.ParseDuration(timeoutStr + "s")
 		if err != nil {
@@ -79,66 +73,103 @@ sslcheck --verbose www.google.com`,
 
 		for _, ip := range args {
 			fmt.Printf("Checking Host: %s.\n", ip)
-			shownTLSInfo := false
-			for _, tlsVersion := range tlsArray {
-				fmt.Printf("Checking for version: %s.\n", tlsNames[tlsVersion])
-				tlsConfig := &tls.Config{
-					MinVersion: tlsVersion,
-					MaxVersion: tlsVersion,
-				}
+			portString := strconv.Itoa(port)
 
-				portString := strconv.Itoa(port)
+			data := make(map[string]interface{})
+			data["tls12"] = getCert(ip, portString, dialer, tls.VersionTLS12)
+			data["tls11"] = getCert(ip, portString, dialer, tls.VersionTLS11)
+			data["tls1"] = getCert(ip, portString, dialer, tls.VersionTLS10)
+			data["ssl3"] = getCert(ip, portString, dialer, tls.VersionSSL30)
 
-				conn, err := tls.DialWithDialer(dialer, "tcp", ip+":"+portString, tlsConfig)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-				defer conn.Close()
-
-				if conn != nil {
-					fmt.Printf("Version supported: %s.\n", tlsNames[tlsVersion])
-					if verbose && !shownTLSInfo {
-						shownTLSInfo = true
-						hsErr := conn.Handshake()
-						if hsErr != nil {
-							fmt.Printf("Client connected, but the certificate failed.")
-							continue
-						}
-						state := conn.ConnectionState()
-						for i, certState := range state.PeerCertificates {
-							switch i {
-							case 0:
-								fmt.Println("Server key information:")
-								fmt.Printf("\tCommon Name:\t %s\n", certState.Subject.CommonName)
-								PrintStringSlice("\tOrganizational Unit:\t", certState.Subject.OrganizationalUnit)
-								PrintStringSlice("\tOrganization:\t", certState.Subject.Organization)
-								PrintStringSlice("\tCity:\t", certState.Subject.Locality)
-								PrintStringSlice("\tState:\t", certState.Subject.Province)
-								PrintStringSlice("\tCountry:", certState.Subject.Country)
-								fmt.Println()
-								fmt.Println("SSL Certificate Valid:")
-								fmt.Printf("\tFrom:\t %s\n", certState.NotBefore.String())
-								fmt.Printf("\tTo:\t %s\n", certState.NotAfter.String())
-								fmt.Println()
-								fmt.Println("Valid Certificate Domain Names:")
-								for dns := range certState.DNSNames {
-									fmt.Printf("\t%v\n", certState.DNSNames[dns])
-								}
-							case 1:
-								fmt.Println("Issued by:")
-								fmt.Printf("\t%s\n", certState.Subject.CommonName)
-								PrintStringSlice("", certState.Subject.OrganizationalUnit)
-								PrintStringSlice("", certState.Subject.Organization)
-							default:
-								continue
-							}
-						}
-					}
-				}
-			}
+			fmt.Printf("[Supported SSL Versions] SSLv3: %t, TLS1.0: %t, TLS1.1: %t, TLS1.2: %t\n", data["ssl3"], data["tls1"], data["tls11"], data["tls12"])
 		}
 	},
+}
+
+func getCert(url, port string, d *net.Dialer, tlsVersion uint16) bool {
+	dconn, err := d.Dial("tcp", url+":443")
+
+	if err != nil {
+		fmt.Printf("[GetCert] DialTCP error: %s (%s)\n", err, url)
+		return false
+	}
+	defer dconn.Close()
+
+	config := tls.Config{
+		InsecureSkipVerify: false,
+		ServerName:         url,
+		MinVersion:         tlsVersion,
+		MaxVersion:         tlsVersion,
+		CipherSuites: []uint16{
+			tls.TLS_RSA_WITH_RC4_128_SHA,
+			tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
+			tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_FALLBACK_SCSV,
+		},
+	}
+
+	conn := tls.Client(dconn, &config)
+	defer conn.Close()
+
+	err = conn.Handshake()
+	if err != nil {
+		fmt.Printf("[TLS Handshake] %s — %s (%s)\n", tlsNames[tlsVersion], err, url)
+		return false
+	}
+
+	if verbose && !shownTLSInfo {
+		shownTLSInfo = true
+		hsErr := conn.Handshake()
+		if hsErr != nil {
+			fmt.Println("Client connected, but the certificate failed.")
+			return false
+		}
+		state := conn.ConnectionState()
+		for i, certState := range state.PeerCertificates {
+			switch i {
+			case 0:
+				fmt.Println("Server key information:")
+				fmt.Printf("\tCommon Name:\t %s\n", certState.Subject.CommonName)
+				PrintStringSlice("\tOrganizational Unit:\t", certState.Subject.OrganizationalUnit)
+				PrintStringSlice("\tOrganization:\t", certState.Subject.Organization)
+				PrintStringSlice("\tCity:\t", certState.Subject.Locality)
+				PrintStringSlice("\tState:\t", certState.Subject.Province)
+				PrintStringSlice("\tCountry:", certState.Subject.Country)
+				fmt.Println()
+				fmt.Println("SSL Certificate Valid:")
+				fmt.Printf("\tFrom:\t %s\n", certState.NotBefore.String())
+				fmt.Printf("\tTo:\t %s\n", certState.NotAfter.String())
+				fmt.Println()
+				fmt.Println("Valid Certificate Domain Names:")
+				for dns := range certState.DNSNames {
+					fmt.Printf("\t%v\n", certState.DNSNames[dns])
+				}
+			case 1:
+				fmt.Println("Issued by:")
+				fmt.Printf("\t%s\n", certState.Subject.CommonName)
+				PrintStringSlice("", certState.Subject.OrganizationalUnit)
+				PrintStringSlice("", certState.Subject.Organization)
+			default:
+				continue
+			}
+		}
+	}
+
+	return true
 }
 
 // PrintStringSlice prints out the title, followed by each item within the slice
