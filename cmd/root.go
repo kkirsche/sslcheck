@@ -76,9 +76,16 @@ sslcheck --verbose www.google.com`,
 			portString := strconv.Itoa(port)
 
 			data := make(map[string]interface{})
+			fmt.Println("Checking for version: TLS1.2")
 			data["tls12"] = getCert(ip, portString, dialer, tls.VersionTLS12)
+
+			fmt.Println("Checking for version: TLS1.1")
 			data["tls11"] = getCert(ip, portString, dialer, tls.VersionTLS11)
+
+			fmt.Println("Checking for version: TLS1.0")
 			data["tls1"] = getCert(ip, portString, dialer, tls.VersionTLS10)
+
+			fmt.Println("Checking for version: SSLv3")
 			data["ssl3"] = getCert(ip, portString, dialer, tls.VersionSSL30)
 
 			fmt.Printf("[Supported SSL Versions] SSLv3: %t, TLS1.0: %t, TLS1.1: %t, TLS1.2: %t\n", data["ssl3"], data["tls1"], data["tls11"], data["tls12"])
@@ -87,7 +94,7 @@ sslcheck --verbose www.google.com`,
 }
 
 func getCert(url, port string, d *net.Dialer, tlsVersion uint16) bool {
-	dconn, err := d.Dial("tcp", url+":443")
+	dconn, err := d.Dial("tcp", url+":"+port)
 
 	if err != nil {
 		fmt.Printf("[GetCert] DialTCP error: %s (%s)\n", err, url)

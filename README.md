@@ -31,44 +31,42 @@ sslcheck --verbose www.google.com
 
 Normal mode:
 ```
-~/g/s/g/k/urltrace git:master ❯❯❯ sslcheck www.google.com
+~/g/g/s/g/k/sslcheck ❯❯❯ sslcheck www.google.com
 Checking Host: www.google.com.
-Checking for version: TLS1.2.
-Version supported: TLS1.2.
-Checking for version: TLS1.1.
-Version supported: TLS1.1.
-Checking for version: TLS1.0.
-Version supported: TLS1.0.
-Checking for version: SSLv3.
-tls: server selected unsupported protocol version 300
+Checking for version: TLS1.2
+Checking for version: TLS1.1
+Checking for version: TLS1.0
+Checking for version: SSLv3
+[TLS Handshake] SSLv3 — tls: server selected unsupported protocol version 300 (www.google.com)
+[Supported SSL Versions] SSLv3: false, TLS1.0: true, TLS1.1: true, TLS1.2: true
 ```
 
 Verbose mode:
 ```
 ~/g/g/s/g/k/sslcheck ❯❯❯ sslcheck --verbose www.google.com
 Checking Host: www.google.com.
-Checking for version: TLS1.2.
-Version supported: TLS1.2.
+Checking for version: TLS1.2
 Server key information:
 	Common Name:	 www.google.com
-	Organizational Unit:	 []
-	Organization:	 [Google Inc]
-	City:	 [Mountain View]
-	State:	 [California]
-	Country: [US]
+	Organizational Unit:
+	Organization:	Google Inc
+	City:	Mountain View
+	State:	California
+	Country:US
+
 SSL Certificate Valid:
-	From:	 2016-06-01 10:20:48 +0000 UTC
-	To:	 2016-08-24 10:11:00 +0000 UTC
+	From:	 2016-06-08 12:37:29 +0000 UTC
+	To:	 2016-08-31 12:30:00 +0000 UTC
+
 Valid Certificate Domain Names:
 	www.google.com
 Issued by:
 	Google Internet Authority G2
-	[]
-	[Google Inc]
-Checking for version: TLS1.1.
-Version supported: TLS1.1.
-Checking for version: TLS1.0.
-Version supported: TLS1.0.
-Checking for version: SSLv3.
-tls: server selected unsupported protocol version 300
+
+Google Inc
+Checking for version: TLS1.1
+Checking for version: TLS1.0
+Checking for version: SSLv3
+[TLS Handshake] SSLv3 — tls: server selected unsupported protocol version 300 (www.google.com)
+[Supported SSL Versions] SSLv3: false, TLS1.0: true, TLS1.1: true, TLS1.2: true
 ```
