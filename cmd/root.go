@@ -33,10 +33,11 @@ var (
 )
 
 var tlsNames = map[uint16]string{
-	tls.VersionSSL30: "SSLv3",
-	tls.VersionTLS10: "TLS1.0",
-	tls.VersionTLS11: "TLS1.1",
-	tls.VersionTLS12: "TLS1.2",
+	tls.VersionSSL30: "SSLv3", // 0x0300
+	tls.VersionTLS10: "TLS1.0", // 0x0301
+	tls.VersionTLS11: "TLS1.1", // 0x0302
+	tls.VersionTLS12: "TLS1.2", // 0x0303
+	tls.VersionTLS13: "TLS1.3", // 0x0304
 }
 
 // RootCmd represents the base command when called without any subcommands
@@ -76,6 +77,9 @@ sslcheck --verbose www.google.com`,
 			portString := strconv.Itoa(port)
 
 			data := make(map[string]interface{})
+			fmt.Println("Checking for version: TLS1.3")
+			data["tls13"] = checkSSLVersionAndViewCert(ip, portString, dialer, tls.VersionTLS13)
+			
 			fmt.Println("Checking for version: TLS1.2")
 			data["tls12"] = checkSSLVersionAndViewCert(ip, portString, dialer, tls.VersionTLS12)
 
@@ -88,7 +92,7 @@ sslcheck --verbose www.google.com`,
 			fmt.Println("Checking for version: SSLv3")
 			data["ssl3"] = checkSSLVersionAndViewCert(ip, portString, dialer, tls.VersionSSL30)
 
-			fmt.Printf("[TLS/SSL Versions] SSLv3: %t, TLS1.0: %t, TLS1.1: %t, TLS1.2: %t\n", data["ssl3"], data["tls1"], data["tls11"], data["tls12"])
+			fmt.Printf("[TLS/SSL Versions] SSLv3: %t, TLS1.0: %t, TLS1.1: %t, TLS1.2: %t, TLS1.3: %t\n", data["ssl3"], data["tls1"], data["tls11"], data["tls12"], data["tls13"])
 		}
 	},
 }
